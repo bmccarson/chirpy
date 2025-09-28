@@ -19,7 +19,7 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 	})
 }
 
-func (cfg *apiConfig) handlerHits(w http.ResponseWriter, _ *http.Request) {
+func (cfg *apiConfig) handlerHits(w http.ResponseWriter, r *http.Request) {
 	hits := cfg.fileserverHits.Load()
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -33,7 +33,7 @@ func (cfg *apiConfig) handlerHits(w http.ResponseWriter, _ *http.Request) {
 	</html>`, hits))
 }
 
-func (cfg *apiConfig) handlerResetHits(w http.ResponseWriter, _ *http.Request) {
+func (cfg *apiConfig) handlerResetHits(w http.ResponseWriter, r *http.Request) {
 	cfg.fileserverHits.Store(0)
 	w.WriteHeader(http.StatusOK)
 	io.WriteString(w, "Hits Reset")
@@ -50,6 +50,7 @@ func main() {
 	serverMux.HandleFunc("GET /api/healthz", handlerReady)
 	serverMux.HandleFunc("GET /admin/metrics", apiCfg.handlerHits)
 	serverMux.HandleFunc("POST /admin/reset", apiCfg.handlerResetHits)
+	serverMux.HandleFunc("POST /api/validate_chirp", handlerChirpVerify)
 
 	server := &http.Server{
 		Handler: serverMux,
@@ -60,7 +61,7 @@ func main() {
 	log.Fatal(server.ListenAndServe())
 }
 
-func handlerReady(w http.ResponseWriter, _ *http.Request) {
+func handlerReady(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	io.WriteString(w, "OK")
