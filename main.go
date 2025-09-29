@@ -1,16 +1,33 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
+
+	"github.com/bmccarson/chirpy/internal/database"
+
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 func main() {
 	const port = "8080"
 
-	apiCfg := &apiConfig{}
+	godotenv.Load()
+	dbURL := os.Getenv("DB_URL")
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatal("Couldn't connect to database")
+	}
+	dbQueries := database.New(db)
+
+	apiCfg := &apiConfig{
+		database: dbQueries,
+	}
 
 	serverMux := http.NewServeMux()
 	serverMux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
