@@ -27,15 +27,17 @@ func main() {
 
 	apiCfg := &apiConfig{
 		database: dbQueries,
+		platform: os.Getenv("PLATFORM"),
 	}
 
 	serverMux := http.NewServeMux()
 	serverMux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
 	serverMux.Handle("/app/assets/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app/assets", http.FileServer(http.Dir("./assets")))))
+	serverMux.HandleFunc("POST /api/validate_chirp", handlerChirpVerify)
+	serverMux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 	serverMux.HandleFunc("GET /api/healthz", handlerReady)
 	serverMux.HandleFunc("GET /admin/metrics", apiCfg.handlerHits)
-	serverMux.HandleFunc("POST /admin/reset", apiCfg.handlerResetHits)
-	serverMux.HandleFunc("POST /api/validate_chirp", handlerChirpVerify)
+	serverMux.HandleFunc("POST /admin/reset", apiCfg.handlerResetUsers)
 
 	server := &http.Server{
 		Handler: serverMux,

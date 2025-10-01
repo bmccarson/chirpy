@@ -12,6 +12,7 @@ import (
 type apiConfig struct {
 	fileserverHits atomic.Int32
 	database       *database.Queries
+	platform       string
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -35,8 +36,8 @@ func (cfg *apiConfig) handlerHits(w http.ResponseWriter, r *http.Request) {
 	</html>`, hits))
 }
 
-func (cfg *apiConfig) handlerResetHits(w http.ResponseWriter, r *http.Request) {
+/* func (cfg *apiConfig) handlerResetHits(w http.ResponseWriter, r *http.Request) {
 	cfg.fileserverHits.Store(0)
 	w.WriteHeader(http.StatusOK)
 	io.WriteString(w, "Hits Reset")
-}
+} */
