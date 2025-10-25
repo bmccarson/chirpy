@@ -2,6 +2,7 @@
 // versions:
 //   sqlc v1.30.0
 
+// Package database queries chirpys database
 package database
 
 import (

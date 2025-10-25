@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"strings"
@@ -106,4 +108,37 @@ func (cfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, 200, chirpList)
+}
+
+func (cfg *apiConfig) handlerGetChirp(w http.ResponseWriter, r *http.Request) {
+	type formattedChirp struct {
+		ChirpID   uuid.UUID `json:"id"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+		Body      string    `json:"body"`
+		User      uuid.UUID `json:"user_id"`
+	}
+	chirpID := r.PathValue("chirpID")
+	if chirpID == "" {
+		respondError(w, "no id provided", 404)
+		return
+	}
+	id, err := uuid.Parse(chirpID)
+	if err != nil {
+		log.Printf("error parsing uuid: %v", err)
+	}
+	chirp, err := cfg.database.GetChirp(context.Background(), id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			respondError(w, "chirp not found", 404)
+			return
+		}
+	}
+	respondJSON(w, 200, formattedChirp{
+		ChirpID:   chirp.ID,
+		CreatedAt: chirp.CreatedAt,
+		UpdatedAt: chirp.UpdatedAt,
+		Body:      chirp.Body,
+		User:      chirp.UserID,
+	})
 }
